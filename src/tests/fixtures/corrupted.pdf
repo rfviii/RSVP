@@ -1,0 +1,3 @@
+%PDF-1.4
+this is not a valid pdf body at all, just garbage bytes to fail parsing.
+%%EOF
