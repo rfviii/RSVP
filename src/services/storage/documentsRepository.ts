@@ -14,6 +14,11 @@ function isValidDocumentRow(row: unknown): row is DocumentRow {
     return false;
   }
   const candidate = row as Partial<DocumentRow>;
+  const hasValidLastOpenedAt =
+    candidate.lastOpenedAt === undefined || typeof candidate.lastOpenedAt === 'number';
+  const hasValidCoverThumbnail =
+    candidate.coverThumbnail === undefined || candidate.coverThumbnail instanceof Blob;
+
   return (
     typeof candidate.id === 'string' &&
     typeof candidate.name === 'string' &&
@@ -22,6 +27,8 @@ function isValidDocumentRow(row: unknown): row is DocumentRow {
     typeof candidate.tokenCount === 'number' &&
     typeof candidate.createdAt === 'number' &&
     typeof candidate.updatedAt === 'number' &&
+    hasValidLastOpenedAt &&
+    hasValidCoverThumbnail &&
     typeof candidate.textDocument === 'object' &&
     candidate.textDocument !== null &&
     Array.isArray(candidate.textDocument.paragraphs)
@@ -66,6 +73,19 @@ export async function listDocuments(): Promise<DocumentRecord[]> {
   }
 
   return rows.filter(isValidDocumentRow).map((row) => toStoredDocument(row).record);
+}
+
+/**
+ * Records that a document was just opened, without rewriting its (possibly
+ * large) `textDocument`. Best-effort: a failed write here shouldn't block
+ * reading, so the caller is expected to swallow the rejection.
+ */
+export async function touchLastOpened(documentId: string): Promise<void> {
+  try {
+    await db.documents.update(documentId, { lastOpenedAt: Date.now() });
+  } catch (error) {
+    throw new StorageError('write-failed', 'This document could not be updated.', { cause: error });
+  }
 }
 
 export async function deleteDocument(documentId: string): Promise<void> {

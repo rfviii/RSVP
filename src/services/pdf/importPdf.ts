@@ -1,3 +1,4 @@
+import { generateCoverThumbnail } from '@/services/pdf/generateCoverThumbnail';
 import { PdfProcessingError } from '@/services/pdf/errors';
 import { assertSupportedPdfFile } from '@/services/pdf/fileValidation';
 import { loadPdfDocument } from '@/services/pdf/pdfLoader';
@@ -32,7 +33,9 @@ export async function importPdfFile(file: File): Promise<PdfExtractionResult> {
   const document = await loadPdfDocument(data);
 
   try {
-    return await extractPdfText(document);
+    const extraction = await extractPdfText(document);
+    const coverThumbnail = await generateCoverThumbnail(document);
+    return { ...extraction, coverThumbnail };
   } finally {
     await document.destroy();
   }

@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ReaderPage } from '@/pages/ReaderPage';
-import { findDocumentById, type StoredDocument } from '@/services/storage/documentsRepository';
+import {
+  findDocumentById,
+  touchLastOpened,
+  type StoredDocument,
+} from '@/services/storage/documentsRepository';
 import { loadProgress } from '@/services/storage/progressRepository';
 import { settingsStore } from '@/state/settings/settingsStore';
 
@@ -73,6 +77,8 @@ export function ReaderRoute() {
 
         setData({ stored, initialIndex: progress?.currentTokenIndex ?? 0 });
         setStatus('ready');
+        // Best-effort: don't block or fail the read if this write doesn't land.
+        touchLastOpened(documentId).catch(() => {});
       } catch {
         if (!cancelled) {
           setStatus('error');
@@ -117,6 +123,7 @@ export function ReaderRoute() {
       title={data.stored.record.name}
       textDocument={data.stored.textDocument}
       documentId={data.stored.record.id}
+      totalPages={data.stored.record.pageCount}
       initialIndex={data.initialIndex}
     />
   );

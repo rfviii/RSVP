@@ -2,11 +2,14 @@ import { useCallback, useEffect, useState, type ChangeEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DocumentList } from '@/components/documents/DocumentList';
 import type { DocumentRecord } from '@/domain/documents/types';
+import { calculatePageProgress } from '@/domain/reader/pageProgress';
+import type { PageProgress } from '@/domain/reader/types';
 import { flattenTextDocumentTokens } from '@/domain/rsvp';
 import { processExtractedPages } from '@/domain/text/pipeline';
 import { PdfProcessingError } from '@/services/pdf/errors';
 import { deleteDocument, listDocuments, saveDocument } from '@/services/storage/documentsRepository';
 import { StorageError } from '@/services/storage/errors';
+import { listAllProgress } from '@/services/storage/progressRepository';
 
 type LibraryStatus = 'loading' | 'ready' | 'error';
 
@@ -16,14 +19,33 @@ export function HomePage() {
   const navigate = useNavigate();
   const [libraryStatus, setLibraryStatus] = useState<LibraryStatus>('loading');
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
+  const [progressByDocumentId, setProgressByDocumentId] = useState<Map<string, PageProgress>>(new Map());
   const [isImporting, setIsImporting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const loadLibrary = useCallback(async () => {
     setLibraryStatus('loading');
     try {
-      const records = await listDocuments();
+      const [records, progressRows] = await Promise.all([listDocuments(), listAllProgress()]);
+      const progressRowsByDocumentId = new Map(progressRows.map((row) => [row.documentId, row]));
+
       setDocuments(records);
+      setProgressByDocumentId(
+        new Map(
+          records.map((record) => {
+            const progressRow = progressRowsByDocumentId.get(record.id);
+            return [
+              record.id,
+              calculatePageProgress({
+                currentPageNumber: progressRow?.currentPageNumber,
+                totalPages: record.pageCount,
+                currentTokenIndex: progressRow?.currentTokenIndex ?? 0,
+                totalTokens: record.tokenCount,
+              }),
+            ];
+          }),
+        ),
+      );
       setLibraryStatus('ready');
     } catch {
       setLibraryStatus('error');
@@ -61,6 +83,8 @@ export function HomePage() {
         tokenCount,
         createdAt: now,
         updatedAt: now,
+        lastOpenedAt: now,
+        coverThumbnail: extraction.coverThumbnail,
       };
 
       await saveDocument({ record, textDocument });
@@ -102,7 +126,7 @@ export function HomePage() {
 
   return (
     <div className="min-h-screen bg-white px-4 py-10 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <div className="mx-auto flex max-w-sm flex-col items-center gap-6">
+      <div className="mx-auto flex max-w-3xl flex-col items-center gap-6">
         <div className="flex w-full items-center justify-between">
           <h1 className="text-2xl font-semibold tracking-tight">RSVP Reader</h1>
           <Link
@@ -139,7 +163,11 @@ export function HomePage() {
         ) : null}
 
         {libraryStatus === 'ready' && documents.length > 0 ? (
-          <DocumentList documents={documents} onDelete={handleDelete} />
+          <DocumentList
+            documents={documents}
+            progressByDocumentId={progressByDocumentId}
+            onDelete={handleDelete}
+          />
         ) : null}
 
         <label

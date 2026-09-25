@@ -83,23 +83,30 @@ export interface RawPage {
   text: string;
 }
 
+export interface NormalizedPage {
+  pageNumber: number;
+  text: string;
+}
+
 /**
- * Turns raw per-page PDF text (with pdf.js line breaks preserved) into a
- * single normalized string: whitespace cleaned, hyphenation repaired,
+ * Turns raw per-page PDF text (with pdf.js line breaks preserved) into
+ * normalized per-page text: whitespace cleaned, hyphenation repaired,
  * repeated headers/footers and page numbers stripped, wrapped lines joined
  * into flowing paragraphs, and paragraph breaks preserved as blank lines.
+ * Page identity is preserved (not joined into one stream) so downstream
+ * tokenization can trace each token back to its PDF page.
  */
-export function normalizeExtractedPages(pages: RawPage[]): string {
+export function normalizeExtractedPages(pages: RawPage[]): NormalizedPage[] {
   const lineEndingsNormalized = pages.map((page) => normalizeLineEndings(page.text));
   const withoutArtifactLines = removeRepeatedAndPageNumberLines(lineEndingsNormalized);
 
-  const flowingPages = withoutArtifactLines.map((pageText) => {
-    const hyphenationRepaired = repairHyphenation(pageText);
-    const wrapsMerged = mergeLineWraps(hyphenationRepaired);
-    return collapseHorizontalWhitespace(wrapsMerged);
-  });
-
-  const joined = flowingPages.filter((page) => page.length > 0).join('\n\n');
-
-  return collapseBlankLines(joined).trim();
+  return pages
+    .map((page, i) => {
+      const hyphenationRepaired = repairHyphenation(withoutArtifactLines[i] ?? '');
+      const wrapsMerged = mergeLineWraps(hyphenationRepaired);
+      const collapsedWhitespace = collapseHorizontalWhitespace(wrapsMerged);
+      const text = collapseBlankLines(collapsedWhitespace).trim();
+      return { pageNumber: page.pageNumber, text };
+    })
+    .filter((page) => page.text.length > 0);
 }

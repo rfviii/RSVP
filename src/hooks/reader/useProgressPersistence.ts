@@ -19,14 +19,16 @@ export function useProgressPersistence(
   currentTokenIndex: number,
   totalTokens: number,
   isPlaying: boolean,
+  currentPageNumber: number | undefined,
 ): void {
   const throttledSaveRef = useRef(
-    throttle((documentIdToSave: string, indexToSave: number) => {
+    throttle((documentIdToSave: string, indexToSave: number, pageToSave: number | undefined) => {
       // Best-effort: a failed save shouldn't crash the reader or surface
       // as an unhandled rejection, just leave progress un-persisted.
       saveProgress({
         documentId: documentIdToSave,
         currentTokenIndex: indexToSave,
+        currentPageNumber: pageToSave,
         updatedAt: Date.now(),
       }).catch(() => {});
     }, PROGRESS_SAVE_INTERVAL_MS),
@@ -37,12 +39,14 @@ export function useProgressPersistence(
       return;
     }
     if (isPlaying) {
-      throttledSaveRef.current(documentId, currentTokenIndex);
+      throttledSaveRef.current(documentId, currentTokenIndex, currentPageNumber);
     } else {
       throttledSaveRef.current.cancel();
-      saveProgress({ documentId, currentTokenIndex, updatedAt: Date.now() }).catch(() => {});
+      saveProgress({ documentId, currentTokenIndex, currentPageNumber, updatedAt: Date.now() }).catch(
+        () => {},
+      );
     }
-  }, [documentId, currentTokenIndex, totalTokens, isPlaying]);
+  }, [documentId, currentTokenIndex, totalTokens, isPlaying, currentPageNumber]);
 
   useEffect(() => {
     const throttledSave = throttledSaveRef.current;

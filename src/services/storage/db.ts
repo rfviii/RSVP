@@ -11,6 +11,12 @@ export interface DocumentRow extends DocumentRecord {
 export interface ProgressRow {
   documentId: string;
   currentTokenIndex: number;
+  /**
+   * The PDF page the reader was on. Optional because progress saved before
+   * page-aware tokenization shipped won't have it — treated as "legacy" and
+   * estimated from token position instead (see calculatePageProgress).
+   */
+  currentPageNumber?: number;
   updatedAt: number;
 }
 

@@ -11,13 +11,17 @@ test.describe('persistence', () => {
     await page.getByLabel('Import PDF').setInputFiles(SAMPLE_PDF);
     await page.waitForURL(/\/reader\//);
 
+    const currentToken = page.getByTestId('current-token');
     await page.getByRole('button', { name: 'Next token' }).click();
-    await expect(page.getByText('World')).toBeVisible();
+    await expect(currentToken).toHaveText('World');
 
     await page.reload();
 
-    await expect(page.getByText('World')).toBeVisible();
-    await expect(page.getByText('2 / 2')).toBeVisible();
+    // Verifies the reload actually resumed at "World" rather than just
+    // rendering it as unread/surrounding text, which the hybrid reader
+    // would do regardless of the resumed position.
+    await expect(page.getByTestId('current-token')).toHaveText('World');
+    await expect(page.getByText('Page 1 / 1')).toBeVisible();
   });
 
   test('an imported document appears in the library, can be reopened, and can be deleted', async ({

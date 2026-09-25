@@ -8,6 +8,13 @@ export interface ReaderProgress {
   ratio: number;
 }
 
+/** The user-facing progress metric: PDF pages, not word/token counts. */
+export interface PageProgress {
+  currentPage: number;
+  totalPages: number;
+  ratio: number;
+}
+
 export interface ReaderState {
   documentId: string | null;
   playbackState: PlaybackState;

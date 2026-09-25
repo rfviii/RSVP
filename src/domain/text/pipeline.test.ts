@@ -15,4 +15,17 @@ describe('processExtractedPages (integration with real PDF extraction)', () => {
     expect(words).toEqual(['Hello', 'World']);
     expect(document.paragraphs[0]?.sentences[0]?.tokens.at(-1)?.punctuation).toBe('paragraphEnd');
   });
+
+  it('tags tokens with the PDF page they came from', async () => {
+    const file = loadFixtureFile('sample.pdf', 'application/pdf');
+    const extraction = await importPdfFile(file);
+
+    const document = processExtractedPages(extraction.pages);
+
+    const tokens = document.paragraphs.flatMap((p) => p.sentences.flatMap((s) => s.tokens));
+    tokens.forEach((token) => {
+      expect(token.pageNumber).toBeGreaterThanOrEqual(1);
+      expect(token.pageNumber).toBeLessThanOrEqual(extraction.pageCount);
+    });
+  });
 });

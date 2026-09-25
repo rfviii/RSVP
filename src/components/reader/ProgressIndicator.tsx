@@ -1,8 +1,8 @@
 import { memo } from 'react';
-import type { ReaderProgress } from '@/domain/reader/types';
+import type { PageProgress } from '@/domain/reader/types';
 
 export interface ProgressIndicatorProps {
-  progress: ReaderProgress;
+  progress: PageProgress;
 }
 
 export const ProgressIndicator = memo(function ProgressIndicator({ progress }: ProgressIndicatorProps) {
@@ -23,8 +23,10 @@ export const ProgressIndicator = memo(function ProgressIndicator({ progress }: P
       >
         <div className="h-full bg-sky-600 transition-[width] dark:bg-sky-500" style={{ width: `${percent}%` }} />
       </div>
-      <span className="self-end text-xs text-slate-600 dark:text-slate-400">
-        {Math.min(progress.currentTokenIndex + 1, progress.totalTokens)} / {progress.totalTokens}
+      <span className="flex items-baseline justify-end gap-1 text-xs text-slate-600 dark:text-slate-400">
+        <span>{progress.totalPages > 0 ? `Page ${progress.currentPage} / ${progress.totalPages}` : '—'}</span>
+        <span aria-hidden="true">·</span>
+        <span>{percent}%</span>
       </span>
     </div>
   );

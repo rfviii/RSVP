@@ -10,6 +10,8 @@ function makeTokens(words: Array<[string, PunctuationType]>): Token[] {
     index,
     sentenceIndex: 0,
     paragraphIndex: 0,
+    pageNumber: 1,
+    trailingText: '',
     punctuation,
   }));
 }

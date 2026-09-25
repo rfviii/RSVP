@@ -8,6 +8,17 @@
   }
 }
 
+@layer utilities {
+  /* Keeps an element's native scrolling (wheel/trackpad/touch/keyboard) while hiding its scrollbar track/thumb. */
+  .no-scrollbar {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* legacy Edge/IE */
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, modern Edge */
+  }
+}
+
 /* Respect the OS-level reduced-motion preference for every transition/animation in the app. */
 @media (prefers-reduced-motion: reduce) {
   *,

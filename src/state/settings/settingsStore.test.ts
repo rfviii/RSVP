@@ -20,12 +20,17 @@ describe('SettingsStore', () => {
   });
 
   it('adopts the persisted value once loading completes', async () => {
-    await saveSettings({ theme: 'dark', wpm: 400 });
+    await saveSettings({ theme: 'dark', wpm: 400, readingBehavior: 'focus', pauseOnScroll: false });
 
     const store = new SettingsStore();
     await store.whenReady();
 
-    expect(store.getSettings()).toEqual({ theme: 'dark', wpm: 400 });
+    expect(store.getSettings()).toEqual({
+      theme: 'dark',
+      wpm: 400,
+      readingBehavior: 'focus',
+      pauseOnScroll: false,
+    });
   });
 
   it('updates the theme and persists it', async () => {
@@ -37,6 +42,30 @@ describe('SettingsStore', () => {
     expect(store.getSettings().theme).toBe('light');
     await vi.waitFor(async () => {
       expect((await loadSettings()).theme).toBe('light');
+    });
+  });
+
+  it('updates the reading behavior and persists it', async () => {
+    const store = new SettingsStore();
+    await store.whenReady();
+
+    store.setReadingBehavior('focus');
+
+    expect(store.getSettings().readingBehavior).toBe('focus');
+    await vi.waitFor(async () => {
+      expect((await loadSettings()).readingBehavior).toBe('focus');
+    });
+  });
+
+  it('updates pauseOnScroll and persists it', async () => {
+    const store = new SettingsStore();
+    await store.whenReady();
+
+    store.setPauseOnScroll(false);
+
+    expect(store.getSettings().pauseOnScroll).toBe(false);
+    await vi.waitFor(async () => {
+      expect((await loadSettings()).pauseOnScroll).toBe(false);
     });
   });
 

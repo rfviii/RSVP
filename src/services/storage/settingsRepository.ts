@@ -2,15 +2,28 @@ import { DEFAULT_WPM, MAX_WPM, MIN_WPM } from '@/constants/reader';
 import { SETTINGS_RECORD_ID } from '@/constants/storage';
 import { db, type SettingsRow } from '@/services/storage/db';
 import { StorageError } from '@/services/storage/errors';
-import { THEME_PREFERENCES, type AppSettings, type ThemePreference } from '@/types/settings';
+import {
+  READING_BEHAVIORS,
+  THEME_PREFERENCES,
+  type AppSettings,
+  type ReadingBehavior,
+  type ThemePreference,
+} from '@/types/settings';
 
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'system',
   wpm: DEFAULT_WPM,
+  readingBehavior: 'normal',
+  // Matches the prior (hardcoded) behavior, so existing users see no change unless they opt out.
+  pauseOnScroll: true,
 };
 
 function isThemePreference(value: unknown): value is ThemePreference {
   return typeof value === 'string' && (THEME_PREFERENCES as readonly string[]).includes(value);
+}
+
+function isReadingBehavior(value: unknown): value is ReadingBehavior {
+  return typeof value === 'string' && (READING_BEHAVIORS as readonly string[]).includes(value);
 }
 
 /** Falls back field-by-field to defaults rather than discarding the whole record on one bad field. */
@@ -26,8 +39,13 @@ function sanitizeSettings(value: unknown): AppSettings {
     typeof candidate.wpm === 'number' && Number.isFinite(candidate.wpm)
       ? Math.min(Math.max(candidate.wpm, MIN_WPM), MAX_WPM)
       : DEFAULT_SETTINGS.wpm;
+  const readingBehavior = isReadingBehavior(candidate.readingBehavior)
+    ? candidate.readingBehavior
+    : DEFAULT_SETTINGS.readingBehavior;
+  const pauseOnScroll =
+    typeof candidate.pauseOnScroll === 'boolean' ? candidate.pauseOnScroll : DEFAULT_SETTINGS.pauseOnScroll;
 
-  return { theme, wpm };
+  return { theme, wpm, readingBehavior, pauseOnScroll };
 }
 
 /** Reads persisted settings, falling back to defaults for a missing record, a corrupted one, or a storage failure. */

@@ -8,11 +8,16 @@ function isValidProgressRow(row: unknown): row is ProgressRow {
     return false;
   }
   const candidate = row as Partial<ProgressRow>;
+  const hasValidPageNumber =
+    candidate.currentPageNumber === undefined ||
+    (typeof candidate.currentPageNumber === 'number' && candidate.currentPageNumber >= 1);
+
   return (
     typeof candidate.documentId === 'string' &&
     typeof candidate.currentTokenIndex === 'number' &&
     Number.isFinite(candidate.currentTokenIndex) &&
     candidate.currentTokenIndex >= 0 &&
+    hasValidPageNumber &&
     typeof candidate.updatedAt === 'number'
   );
 }
@@ -39,4 +44,16 @@ export async function loadProgress(documentId: string): Promise<ReadingProgress 
   }
 
   return row;
+}
+
+/** Loads progress for every document at once, for the library list's per-card progress display. */
+export async function listAllProgress(): Promise<ReadingProgress[]> {
+  let rows: ProgressRow[];
+  try {
+    rows = await db.progress.toArray();
+  } catch (error) {
+    throw new StorageError('read-failed', 'Reading progress could not be loaded.', { cause: error });
+  }
+
+  return rows.filter(isValidProgressRow);
 }

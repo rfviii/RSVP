@@ -37,6 +37,16 @@ describe('TextDocument structure', () => {
     });
   });
 
+  it('assigns each token the same pageNumber as its paragraph', () => {
+    sampleTextDocument.paragraphs.forEach((paragraph) => {
+      paragraph.sentences.forEach((sentence) => {
+        sentence.tokens.forEach((token) => {
+          expect(token.pageNumber).toBe(paragraph.pageNumber);
+        });
+      });
+    });
+  });
+
   it('never produces empty tokens', () => {
     const tokens = flattenTokens(sampleTextDocument);
 

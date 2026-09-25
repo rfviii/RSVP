@@ -18,6 +18,8 @@ beforeEach(async () => {
   await settingsStore.whenReady();
   settingsStore.setTheme('system');
   settingsStore.setWpm(300);
+  settingsStore.setReadingBehavior('normal');
+  settingsStore.setPauseOnScroll(true);
 });
 
 afterEach(async () => {
@@ -54,5 +56,37 @@ describe('SettingsPage', () => {
     renderSettingsPage();
 
     expect(screen.getByRole('link', { name: /done/i })).toBeInTheDocument();
+  });
+
+  it('shows the current RSVP reading behavior and describes both modes', () => {
+    renderSettingsPage();
+
+    expect(screen.getByRole('radio', { name: /normal mode/i, checked: true })).toBeInTheDocument();
+    expect(screen.getByText(/hide surrounding content and prevent scrolling/i)).toBeInTheDocument();
+    expect(screen.getByText(/document scrollable while rsvp is playing/i)).toBeInTheDocument();
+  });
+
+  it('selecting Focus Mode updates and persists the reading behavior', () => {
+    renderSettingsPage();
+
+    fireEvent.click(screen.getByRole('radio', { name: /focus mode/i }));
+
+    expect(screen.getByRole('radio', { name: /focus mode/i, checked: true })).toBeInTheDocument();
+    expect(settingsStore.getSettings().readingBehavior).toBe('focus');
+  });
+
+  it('shows "Pause RSVP on scroll" checked by default', () => {
+    renderSettingsPage();
+
+    expect(screen.getByRole('checkbox', { name: /pause rsvp on scroll/i })).toBeChecked();
+  });
+
+  it('unchecking "Pause RSVP on scroll" updates and persists it', () => {
+    renderSettingsPage();
+
+    fireEvent.click(screen.getByRole('checkbox', { name: /pause rsvp on scroll/i }));
+
+    expect(screen.getByRole('checkbox', { name: /pause rsvp on scroll/i })).not.toBeChecked();
+    expect(settingsStore.getSettings().pauseOnScroll).toBe(false);
   });
 });

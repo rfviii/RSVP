@@ -34,6 +34,14 @@ function classifyTrailingPunctuation(trailing: string): PunctuationType {
 export interface WordToken {
   text: string;
   punctuation: PunctuationType;
+  /**
+   * The literal text between this word and the next (trimmed), e.g. ",",
+   * ".", "!", `."`, "—". Kept separate from `punctuation`, which is only a
+   * coarse category for RSVP timing (and gets overridden to `paragraphEnd`
+   * at paragraph boundaries) — this is for faithfully rendering the
+   * surrounding text in the hybrid reader.
+   */
+  trailingText: string;
 }
 
 /**
@@ -52,6 +60,10 @@ export function tokenizeSentence(sentenceText: string): WordToken[] {
     const trailingEnd = nextMatch?.index ?? sentenceText.length;
     const trailing = sentenceText.slice(matchEnd, trailingEnd);
 
-    return { text, punctuation: classifyTrailingPunctuation(trailing) };
+    return {
+      text,
+      punctuation: classifyTrailingPunctuation(trailing),
+      trailingText: trailing.trim(),
+    };
   });
 }

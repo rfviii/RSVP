@@ -1,6 +1,6 @@
 import { MAX_WPM, MIN_WPM } from '@/constants/reader';
 import { DEFAULT_SETTINGS, loadSettings, saveSettings } from '@/services/storage/settingsRepository';
-import type { AppSettings, ThemePreference } from '@/types/settings';
+import type { AppSettings, ReadingBehavior, ThemePreference } from '@/types/settings';
 
 type SettingsListener = (settings: AppSettings) => void;
 
@@ -46,6 +46,14 @@ export class SettingsStore {
 
   setWpm(wpm: number): void {
     this.update({ ...this.settings, wpm: clampWpm(wpm) });
+  }
+
+  setReadingBehavior(readingBehavior: ReadingBehavior): void {
+    this.update({ ...this.settings, readingBehavior });
+  }
+
+  setPauseOnScroll(pauseOnScroll: boolean): void {
+    this.update({ ...this.settings, pauseOnScroll });
   }
 
   subscribe(listener: SettingsListener): () => void {

@@ -4,6 +4,6 @@ import type { TextDocument } from '@/domain/text/types';
 
 /** Runs the full normalization -> structure detection -> tokenization pipeline. */
 export function processExtractedPages(pages: RawPage[]): TextDocument {
-  const normalizedText = normalizeExtractedPages(pages);
-  return buildTextDocument(normalizedText);
+  const normalizedPages = normalizeExtractedPages(pages);
+  return buildTextDocument(normalizedPages);
 }
